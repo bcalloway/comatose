@@ -411,7 +411,9 @@ BODY {
 }
 
 </style>
-    <%= javascript_include_tag :defaults %>
+    <%= javascript_include_tag 'prototype/prototype', 'prototype/scriptaculous', 'prototype/effects', 'prototype/dragdrop', 'prototype/controls'  %>
+    <%= javascript_include_tag 'fckeditor/fckeditor' %>
+    
     <script>
 // CSS Browser Selector   v0.2.3b (M@: added noscript support)
 // Documentation:         http://rafael.adm.br/css_browser_selector

@@ -30,16 +30,18 @@ var ComatoseList = {
   
   toggle_tree_nodes : function(img, id) {
     if(/expanded/.test(img.src)) {
-      $('page_list_'+ id).addClassName('collapsed');
-      img.src = img.src.replace(/expanded/, 'collapsed')
+      //$('page_list_'+ id).addClassName('collapsed');
+      Element.addClassName($('page_list_'+ id), 'collapsed');
+      img.src = img.src.replace(/expanded/, 'collapsed');
       if(ComatoseList.save_node_state) {
         var items = ComatoseList._read_state();
         items = items.select(function(id){ return id != img.id; })
         ComatoseList._write_state(items);
       }
     } else {
-      $('page_list_'+ id).removeClassName('collapsed');
-      img.src = img.src.replace(/collapsed/, 'expanded')
+      //$('page_list_'+ id).removeClassName('collapsed');
+      Element.removeClassName($('page_list_'+ id), 'collapsed');
+      img.src = img.src.replace(/collapsed/, 'expanded');
       if(ComatoseList.save_node_state) {
         var items = ComatoseList._read_state();
         items.push(img.id);
@@ -49,13 +51,15 @@ var ComatoseList = {
   },
   
   expand_node: function(id) {
-    $('page_list_'+ id).removeClassName('collapsed');
-    $('page_controller_'+ id).src = $('page_controller_'+ id).src.replace(/collapsed/, 'expanded')    
+    //$('page_list_'+ id).removeClassName('collapsed');
+    Element.removeClassName($('page_list_'+ id), 'collapsed');
+    $('page_controller_'+ id).src = $('page_controller_'+ id).src.replace(/collapsed/, 'expanded');  
   },
   
   collapse_node: function(id) {
-    $('page_list_'+ id).addClassName('collapsed');
-    $('page_controller_'+ id).src = $('page_controller_'+ id).src.replace(/expanded/, 'collapsed')    
+    //$('page_list_'+ id).addClassName('collapsed');
+    Element.addClassName($('page_list_'+ id), 'collapsed');
+    $('page_controller_'+ id).src = $('page_controller_'+ id).src.replace(/expanded/, 'collapsed');
   },
   
   item_hover : function(node, state, is_delete) {
@@ -67,19 +71,19 @@ var ComatoseList = {
   },
   
   toggle_reorder: function(node, anc, id) {
-    if( $(node).hasClassName('do-reorder') ) {
-      $(node).removeClassName( 'do-reorder' );
-      $(anc).removeClassName('reordering');
-      $(anc).innerHTML = "reorder children";
-    } else {
-      $(node).addClassName( 'do-reorder' );
-      $(anc).addClassName('reordering');
-      $(anc).innerHTML = "finished reordering";
-      // Make sure the children are visible...
-      ComatoseList.expand_node(id);
-    }
-  },
-  
+      if( $(node).hasClassName('do-reorder') ) {
+        $(node).removeClassName( 'do-reorder' );
+        $(anc).removeClassName('reordering');
+        $(anc).innerHTML = "reorder children";
+      } else {
+        $(node).addClassName( 'do-reorder' );
+        $(anc).addClassName('reordering');
+        $(anc).innerHTML = "finished reordering";
+        // Make sure the children are visible...
+        ComatoseList.expand_node(id);
+      }
+    },
+
   _write_state: function(items) {
     var cookie = {}; var options = {}; var expiration = new Date();
     cookie[ ComatoseList.state_key ] = items.join(',');
@@ -108,8 +112,10 @@ var ComatoseEditForm = {
   init : function(mode) {
     this.mode = mode;
     this.default_data = Form.serialize(document.forms[0]);
+    //this.default_data = $('form').serialize(document.forms[0]);
     if(mode == 'new') {
       this.last_title_slug = $('page_title').value.toSlug();
+      //this.last_title_slug = $('#page_title').value.toSlug();
       Event.observe('page_title', 'blur', ComatoseEditForm.title_updated_aggressive);
     } else {
       Event.observe('page_title', 'blur', ComatoseEditForm.title_updated);
@@ -148,7 +154,7 @@ var ComatoseEditForm = {
     }
     this.last_title = slug.value;
   },
-  // Todo: Make the meta fields remember their visibility?
+
   toggle_extra_fields : function(anchor) {
     if(anchor.innerHTML == "More...") {
       Show.these(
@@ -223,10 +229,10 @@ var Layout = {};
 
 // This class allows dom objects to stretch with the browser 
 // (for when a good, cross-browser, CSS approach can't be found)
-Layout.LiquidBase = Class.create();
-// Base class for all Liquid* layouts...
+ Layout.LiquidBase = Class.create();
+// // Base class for all Liquid* layouts...
 Object.extend(Layout.LiquidBase.prototype, {
-  enabled: true,
+  enabled: false,
   elems: [],
   offset: null,
   // Constructor is (offset, **array_of_elements)

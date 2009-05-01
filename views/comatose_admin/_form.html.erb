@@ -5,7 +5,13 @@
 
   <tr>
     <td class="label"><label for="page_title">Title</label></td>
-    <td class="field"><%= f.text_field :title, :tabindex=>1, :maxlength=>255, :size=>50 %> <%= link_to_function "More...", "ComatoseEditForm.toggle_extra_fields(this)", :id=>'more-options' %></td>
+    <td class="field"><%= f.text_field :title, :tabindex=>1, :maxlength=>255, :size=>50 %>
+      <% if !Comatose.config.allow_more_link %>
+        <style>
+          #more-options {visibility: hidden;}
+        </style
+      <% end %>
+        <br /><%= link_to_function "More...", "ComatoseEditForm.toggle_extra_fields(this)", :id=>'more-options' %></td>
   </tr>
 
   <tr id="slug_row" class="meta-info">
@@ -35,7 +41,7 @@
 
   <tr>
     <td class="label body"><label for="page_body">Body</label></td>
-    <td class="field"><%= f.text_area :body, :rows=>20, :tabindex=>2 %></td>
+    <td class="field"><%= fckeditor_textarea('page', 'body', :toolbarSet => 'Simple', :width => '100%', :height => '500px') %></td>
   </tr>
 
 <% if show_field? 'filter' %>

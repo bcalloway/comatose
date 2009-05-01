@@ -1,13 +1,16 @@
 # The controller for serving cms content...
-class ComatoseController < ActionController::Base 
+class ComatoseController < ActionController::Base
+  
   unloadable
+  helper :application
   
   before_filter :handle_authorization, :set_content_type
+  
   after_filter :cache_cms_page
     
   # Render a specific page
   def show
-    page_name, page_ext = get_page_path
+    page_name, page_ext = get_page_path 
     page = ComatosePage.find_by_path( page_name )
     status = nil
     if page.nil?
@@ -21,6 +24,7 @@ class ComatoseController < ActionController::Base
     else
       # Make the page access 'safe' 
       @page = Comatose::PageWrapper.new(page)
+      #@school = Comatose::PageWrapper.new(page, :conditions => ['title = ?', 'School'])
       # For accurate uri creation, tell the page class which is the active mount point...
       ComatosePage.active_mount_info = get_active_mount_point(params[:index])
       render :text=>page.to_html({'params'=>params.stringify_keys}), :layout=>get_page_layout, :status=>status
@@ -28,16 +32,20 @@ class ComatoseController < ActionController::Base
   end
 
 protected
-
+  ## This handles making sure a user is logged-in to see other pages
   def handle_authorization
-    if Comatose.config.authorization.is_a? Proc
-      instance_eval &Comatose.config.authorization
-    elsif Comatose.config.authorization.is_a? Symbol
-      send(Comatose.config.authorization)
-    elsif defined? authorize
-      authorize
-    else
-      true
+    page_name, page_ext = get_page_path
+    ## make sure that a user who is not logged-in can only see the homepage
+    if page_name != ''
+      if Comatose.config.authorization.is_a? Proc
+        instance_eval &Comatose.config.authorization
+      elsif Comatose.config.authorization.is_a? Symbol
+        send(Comatose.config.authorization)
+      elsif defined? authorize
+        authorize
+      else
+        true
+      end
     end
   end
 
@@ -84,7 +92,11 @@ protected
   # Returns a path to plugin layout, if it's unspecified, otherwise
   # a path to an application layout...
   def get_page_layout
-    params[:layout]
+    if params[:layout] == 'comatose_content'
+      File.join(plugin_layout_path, params[:layout])
+    else
+      params[:layout]
+    end
   end
 
   # An after_filter implementing page caching if it's enabled, globally, 
@@ -108,8 +120,8 @@ protected
     response.headers["Content-Type"] = "text/html; charset=#{Comatose.config.content_type}" unless Comatose.config.content_type.nil? or response.headers['Status'] == '404 Not Found'
   end
 
-  COMATOSE_VIEW_PATH = File.join(RAILS_ROOT, 'vendor', 'plugins', 'comatose', 'views')
-  ActionController::Base.append_view_path(COMATOSE_VIEW_PATH) unless ActionController::Base.view_paths.include?(COMATOSE_VIEW_PATH)
+  # Path to layouts within the plugin... Assumes the plugin directory name is 'comatose'
+  define_option :plugin_layout_path, File.join( '..', '..', '..', 'vendor', 'plugins', 'comatose', 'views', 'layouts'  )
 
   # Include any, well, includes...
   Comatose.config.includes.each do |mod|

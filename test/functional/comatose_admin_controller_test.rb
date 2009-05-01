@@ -16,8 +16,6 @@ class ComatoseAdminControllerTest < Test::Unit::TestCase
     @controller = ComatoseAdminController.new
     @request    = ActionController::TestRequest.new
     @response   = ActionController::TestResponse.new
-    Comatose.config.admin_get_author = nil
-    Comatose.config.admin_authorization = nil
   end
   
   should "show the index action" do

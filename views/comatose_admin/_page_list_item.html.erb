@@ -13,8 +13,15 @@
 # Create the page-level links...
 links = []
 links << link_to(pluralize(page.versions.length, 'revision', 'revisions'), :action=>'versions', :id=>page) if !page.nil? and !page.versions.nil? and page.versions.length > 0
-links << link_to('add child page', {:action=>'new', :parent=>page}, :title=>"Add a child to '#{page.title}'", :class=>'add-page')
-links << link_to_function('reorder children', "ComatoseList.toggle_reorder('page_list_#{page.id}',this,#{page.id})", :title=>"Reorder children of '#{page.title}'", :class=>'reorder-children', :href=>url_for(:action=>'reorder', :id=>page)) if !page.children.empty? and page.children.length > 1
+
+if Comatose.config.allow_add_child
+  links << link_to('add child page', {:action=>'new', :parent=>page}, :title=>"Add a child to '#{page.title}'", :class=>'add-page')
+end
+
+if Comatose.config.allow_reordering
+  links << link_to_function('reorder children', "ComatoseList.toggle_reorder('page_list_#{page.id}',this,#{page.id})", :title=>"Reorder children of '#{page.title}'", :class=>'reorder-children', :href=>url_for(:action=>'reorder', :id=>page)) if !page.children.empty? and page.children.length > 1
+end
+
 links << link_to('delete', {:action=>'delete', :id=>page}, :confirm=>'This will delete this page, and any children. Are you sure?', :title=>"Delete page '#{page.title}' and all it's children", :class=>'delete-page', :method=>'post', :onmouseover=>"ComatoseList.item_hover('page_#{page.id}', 'over', true)", :onmouseout=>"ComatoseList.item_hover('page_#{page.id}', 'out', true)") unless @root_pages.include? page
 # Level check, one, two, three...
 collapse_children = (level >= Comatose.config.default_tree_level)
@@ -52,9 +59,8 @@ collapse_children = (level >= Comatose.config.default_tree_level)
     <% end %>
   </ul>
 
-  <%= sortable_element( "page_list_#{page.id}", 
-        :complete => visual_effect(:highlight, "page_list_#{page.id}"), 
-        :handle=>'handle',
-        :update=>'flash-content',
-        :url => { :action => "reorder", :id=>page } ) if !page.children.empty? and page.children.length > 1 %>
+<script type="text/javascript">
+Sortable.create("page_list_<%= page.id %>", {constraint:false, onUpdate:function(){new Ajax.Request('/admin/reorder/<%= page.id %>', {asynchronous:true, evalScripts:true, onComplete:function(request){new Effect.Highlight("page_list_<%= page.id %>",{});}, parameters:Sortable.serialize("page_list_<%= page.id %>") + '&authenticity_token=' + encodeURIComponent('1a1beaf786b88c4b781655902933e51326212de7')})}})
+</script>
+  
 </li>

@@ -37,6 +37,13 @@ module Comatose
     attr_accessor_with_default :helpers,              []
     attr_accessor_with_default :includes,             []
     attr_accessor_with_default :allow_import_export,  true
+    
+    # Custom rules to hide functions from users
+    attr_accessor_with_default :allow_clear_cache,    true
+    attr_accessor_with_default :allow_more_link,      true
+    attr_accessor_with_default :allow_reordering,     true
+    attr_accessor_with_default :allow_add_child,      true
+
 
     # 'Blockable' setters
     blockable_attr_accessor    :authorization

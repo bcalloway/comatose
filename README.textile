@@ -1,0 +1,227 @@
+h1. Comatose
+
+*NOTE:*<br />
+This fork contains various fixes to make the plugin compatible with Rails 2.3.2.<br/>
+There are also additions to the config file you can include in environment.rb to allow granular control over what a user can access:
+<pre><code>
+  # Custom rules to hide functions from users
+  attr_accessor_with_default :allow_clear_cache,    true
+  attr_accessor_with_default :allow_more_link,      true
+  attr_accessor_with_default :allow_reordering,     true
+  attr_accessor_with_default :allow_add_child,      true
+</code></pre>
+
+The page reordering works, however I resorted to using the original scriptaculous <code>Sortable.create</code> since for some reason the Rails <code>sortable_element</code> would not work.
+
+h3. Example Configuration Using This Fork
+
+You configure Comatose in your <code>config/environment.rb</code> file. Here is an example configuration block:
+<pre><code>
+Comatose.configure do |config|
+
+  config.admin_title          = 'Administration'
+  config.admin_helpers        = []
+  config.admin_sub_title      = 'Administration Pages'
+  config.content_type         = 'utf-8'
+  config.default_filter       = ''
+  config.default_processor    = :erb
+  config.default_tree_level   = 3
+  config.disable_caching      = true
+  config.hidden_meta_fields   = 'filter'
+  config.allow_import_export  = true
+  
+  # Custom rules to hide functions from users
+  config.allow_clear_cache    = true
+  config.allow_more_link      = true
+  config.allow_reordering     = true
+  config.allow_add_child      = true
+  
+  config.helpers << ApplicationHelper
+
+  # Includes AuthenticationSystem in the ComatoseController
+  config.includes << :authenticated_system
+
+  # Calls :login_required as a before_filter
+  config.authorization = :login_required
+     
+  # Includes AuthenticationSystem in the ComatoseAdminController
+  config.admin_includes << :authenticated_system
+
+  # Returns the author name (login, in this case) for the current user
+    config.admin_get_author do
+      current_user.login
+    end
+
+  # Calls :login_required as a before_filter
+  config.admin_authorization = :login_required
+  
+  #Returns different admin 'root paths'
+    config.admin_get_root_page do
+      
+      #cms_role is a special db field in the users table defining a user role, you could also use role_ids
+        if current_user.cms_role == "root" # This depends on your system
+          ComatosePage.find_by_path( '' )
+    
+        elsif current_user.cms_role == "school"
+          # Returns multiple 'roots'
+          [
+            ComatosePage.find_by_path( 'school' )
+          ]
+    
+        else
+          redirect_to('/')
+          # Other possible values here could be:
+          #   ComatosePage.root
+          #   or
+          #   access_denied
+        end
+      end
+
+end
+</code></pre>
+
+h1. Original Documentation
+
+* Original Author:  M@ McCray
+* Website: comatose.rubyforge.org
+* Email: matt at elucidata dot net
+
+*Comatose* is a micro CMS designed for being embedded into existing Rails applications.
+
+It's intended for simple CMS support. Comatose supports:
+
+ * Nested pages
+ * Versioning
+ * Page markup in Textile, Markdown, RDoc, or easily add your own 
+ * Page processing through Liquid or ERb
+ * Generators for easy installation/migration
+ * Completely self-contained within plugin folder
+
+It's meant to be lean, mean, easily embedded, and easy to re-skin for existing applications. If you need something more, I would recommend looking into Radiant.
+
+For more information, see the "Getting Started":http://comatose.rubyforge.org/getting-started-guide guide.
+
+h3. Requirements
+
+ * Rails 2+ (2.1)
+ * `acts_as_list` and `acts_as_tree` plugins are required (at the moment)
+
+h3. Development Notes
+
+*NOTE*: This is an active branch of Comatose that is built specifically for Rails 2.1. I will *probably* remove any legacy support.
+
+ * Make comatose fully self-contained, which means removing `acts_as_(tree|list)`
+ * Improve `ComatoseAdminController` to reduce number of DB calls for building the page tree
+ * Move to gem plugin
+ * `Comatose.configure` needs to be an initializer (update docs)
+ * Go through bugs on 1x branch from google code and ensure they are fixed
+ * Give access to all the default rails helpers to Comatose Pages by default?
+ * UI refresh (nothing major, just some cleanup).
+ * RESTful goodness.
+ * Support XML/JSON responses from `ComatoseController` and `ComatoseAdminController`.
+ * Support for static rendering (for generating sites like this blog).
+
+h3. Installation
+
+*Note*: See the 'Upgrading' section if you already have an older version of the comatose plugin installed.
+        
+<pre><code>
+    $ ./script/plugin install git://github.com/darthapo/comatose.git
+    $ ./script/generate comatose_migration
+    $ rake db:migrate
+</code></pre>
+  
+Open your <code>routes.rb</code> and move the following comatose route to the bottom:
+
+   <pre><code> map.comatose_root ''</pre></code>
+
+That's it, you're ready to go! You should be able to browse to http://127.0.0.1:3000/**comatose_admin** and start adding pages to your CMS. 
+Browsing to http://127.0.0.1:3000/ will render your comatose pages if routing doesn't match any of your controllers. 
+
+
+h3. Upgrading
+
+*NOTE*: This is an experimental 2.0 branch, so upgrading is possible at the moment, but these instructions may not work for much longer.
+
+If you are upgrading from an older version of Comatose (version 0.3, 0.4, 0.5, or 0.6), then you will need to re-install the comatose plugin and run:
+
+<pre><code>
+    $ ./script/plugin remove comatose
+    $ ./script/plugin install comatose
+    $ ./script/generate comatose_migration --upgrade --from=VERSION
+    $ rake migrate
+</code></pre>
+
+*Note*: Be sure to set the `--from` parameter to the version of Comatose you last had installed. Also, you only need to first two digits, including the dot, of the version you are upgrading from. For example, if you're upgrading from version 0.6.9 you can use:
+
+<pre><code>
+    $ ./script/generate comatose_migration --upgrade --from=0.6
+</code></pre>
+
+This will create the upgrade migration(s) for you. It just adds the new fields, so you can keep the original migration comatose created.
+
+
+h3. Configuration
+
+You configure Comatose in your <code>config/environment.rb</code> file. Here is an example configuration block:
+
+<pre><code>
+    Comatose.configure do |config|
+      # Sets the text in the Admin UI's title area
+      config.admin_title = "Site Content"
+      config.admin_sub_title = "Content for the rest of us..."
+    end
+</pre></code>
+  
+Here's an example that uses the `AuthenticationSystem` as generated by the `restful_authentication` plugin:
+
+<pre><code>
+    Comatose.configure do |config|
+      # Includes AuthenticationSystem in the ComatoseController
+      config.includes << :authenticated_system
+
+      # admin 
+      config.admin_title = "Comatose - TESTING"
+      config.admin_sub_title = "Content for the rest of us..."
+
+      # Includes AuthenticationSystem in the ComatoseAdminController
+      config.admin_includes << :authenticated_system
+  
+      # Calls :login_required as a before_filter
+      config.admin_authorization = :login_required
+      # Returns the author name (login, in this case) for the current user
+      config.admin_get_author do
+        current_user.login
+      end
+    end
+</code></pre>
+
+
+h3. Extra Credit
+
+This plugin includes the work of many wonderful contributors to the Railsphere. Following are the specific libraries that are distributed with Comatose. If I've missed someone/something please let me know.
+
+* "Liquid":http://home.leetsoft.com/liquid by "Tobias Luetke":http://blog.leetsoft.com
+* "RedCloth":http://whytheluckystiff.net/ruby/redcloth by "_why":http://whytheluckystiff.net
+* "Acts as Versioned":http://ar-versioned.rubyforge.org by "Rick Olsen":http://weblog.techno-weenie.net
+* "Behaviors":http://behaviors.rubyforge.org by Atomic Object LLC -- very nice BDD-like testing library
+
+h3. Feedback
+
+I’ve released Comatose under the MIT license. Which basically means you can use it however you want.
+
+Don't forget to read the "Getting Started":http://comatose.rubyforge.org/getting-started-guide guide located on the RubyForge project site.
+
+If you like it, hate it, or have some ideas for new features, let me know!
+
+matt at elucidata dot net
+
+
+* "Getting Started":http://comatose.rubyforge.org/getting-started-guide
+* "Liquid":http://home.leetsoft.com/liquid
+* "Tobias Luetke":http://blog.leetsoft.com
+* "RedCloth":http://whytheluckystiff.net/ruby/redcloth
+* "_why":http://whytheluckystiff.net
+* "Acts as Versioned":http://ar-versioned.rubyforge.org
+* "Rick Olsen":http://weblog.techno-weenie.net
+* "Behaviors":http://behaviors.rubyforge.org

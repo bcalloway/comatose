@@ -62,11 +62,22 @@ class ComatoseAdminController < ActionController::Base
           when 'up' then @target.move_higher
           when 'down' then @target.move_lower
         end
-        redirect_to :action=>'reorder', :id=>@page
+        redirect_to :action => 'reorder', :id => @page
       end
     end
   end
-
+  
+  # def update_positions
+  #   @slideshow = Slideshow.find(params[:id])
+  #   @bucket = @slideshow.images.find(:all, :conditions => ['bucket = ?', params[:bucket]])
+  #   
+  #   @bucket.each do |image|
+  #     image.position = params["image-list-#{image.bucket}"].index(image.id.to_s) + 1
+  #     image.save
+  #   end
+  #   render :nothing => true
+  # end
+  
   # Allows comparing between two versions of a page's content
   def versions
     @page = ComatosePage.find params[:id]
